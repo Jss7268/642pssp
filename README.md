@@ -1,6 +1,20 @@
 # Byte for Byte Attacks with SSP and P-SSP
 See https://github.com/zhilongwang/PolymorphicCanaries for information about Polymorphic canaries
 
+For this attack, we will only be using Stack Smashing Protectors to prevent stack buffer overflow. We will be disabling ASLR and Non-Executable Stacks for simplicity. This exploit shows a vulnerability with SSP and not other non-canary methods to prevent stack buffer overflow.
+
+**If running this project, disable aslr, but it should be reenabled after**
+
+To Disable ASLR:
+```
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+```
+
+To Reenable ASLR:
+```
+echo 2 | sudo tee /proc/sys/kernel/randomize_va_space
+```
+
 ## SSP
 To run against SSP use two process tabs with Ubuntu:
 ### Process 1
