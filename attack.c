@@ -5,7 +5,7 @@
 #include <arpa/inet.h> 
 #include<string.h>
 
-#define PORT (8080)
+//#define PORT (8080)
 #define ARRAY_SIZE (100)
 #define CANARY_SIZE (10)
 
@@ -70,7 +70,7 @@ int getSmashLocation(int sock, struct sockaddr_in serverAddress, char *input) {
 int getOneByte(int sock, struct sockaddr_in serverAddress, char *input, int idx) {
 
 	// c will loop around to 0 when it is done
-	for (int c = 1; c < 256; c++) {
+	for (unsigned char c = 1; c > 0; c++) {
 		input[idx] = c;
 
 		// happens if the child doesn't die
@@ -86,11 +86,16 @@ int getOneByte(int sock, struct sockaddr_in serverAddress, char *input, int idx)
 	return -1;
 }
 
-int main() {
+int main(int argc, char const *argv[]) {
 	int sock = 0; 
 	struct sockaddr_in serverAddress; 
-	char *hello = "Hello from client"; 
 	char buffer[1024] = {0}; 
+	if (argc < 2) {
+		printf("Please specify port. 8080 for SSP and 1234 for P-SSP");
+		return 1;
+	}
+	char *endptr;
+	long PORT = strtoll(argv[1], &endptr, 10);
    
 	serverAddress.sin_family = AF_INET; 
 	serverAddress.sin_port = htons(PORT); 
