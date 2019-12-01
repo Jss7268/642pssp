@@ -15,10 +15,11 @@
 int overflow(int socket) {
 	char buffer[5];
 	unsigned int can0 = buffer[6];
+
+	// these print statements show how the canary value is static for SSP
+	// and dynamic for P-SSP
 	printf("%d\n", can0);
 	int val = recv(socket, buffer, 1024, 0);
-	can0 = buffer[6];
-	printf("%d\n", can0);
 	return val;
 }
 
@@ -56,8 +57,6 @@ int main(int argc, char const *argv[]) {
 	char *endptr;
 	long PORT = strtoll(argv[1], &endptr, 10);
 
-	printf("PORT: %ld", PORT);
-	printf("hi");
 	   
 	// Creating socket file descriptor 
 	if ((serverfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) { 
@@ -92,7 +91,6 @@ int main(int argc, char const *argv[]) {
 
 		int childStatus = createChild(newSocket);
 		
-		printf("Child status: %d\n", childStatus);
 		char *message;
 		switch (childStatus) {
 			case 0:

