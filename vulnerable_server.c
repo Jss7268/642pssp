@@ -1,4 +1,3 @@
-// Server side C/C++ program to demonstrate Socket programming 
 #include <unistd.h> 
 #include <stdio.h> 
 #include <sys/socket.h> 
@@ -8,15 +7,18 @@
 #include<sys/wait.h> 
 #include <sys/signal.h>
 
-#define PORT 8080 
+//#define PORT 8080 
 #define OK_STR ("OK\n")
 #define STACK_SMASH_STR ("SMASH\n")
 #define SEG_FAULT_STR ("SIGSEG\n")
 
 int overflow(int socket) {
 	char buffer[5];
+	unsigned int can0 = buffer[6];
+	printf("%d\n", can0);
 	int val = recv(socket, buffer, 1024, 0);
-
+	can0 = buffer[6];
+	printf("%d\n", can0);
 	return val;
 }
 
@@ -46,6 +48,16 @@ int main(int argc, char const *argv[]) {
 	struct sockaddr_in address; 
 	int opt = 1; 
 	int addrlen = sizeof(address); 
+	
+	if (argc < 2) {
+		printf("Please specify port. 8080 for SSP and 1234 for P-SSP");
+		return 1;
+	}
+	char *endptr;
+	long PORT = strtoll(argv[1], &endptr, 10);
+
+	printf("PORT: %ld", PORT);
+	printf("hi");
 	   
 	// Creating socket file descriptor 
 	if ((serverfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) { 
